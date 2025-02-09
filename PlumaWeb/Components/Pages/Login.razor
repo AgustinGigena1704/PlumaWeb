@@ -20,7 +20,7 @@
     <div class="login-container">
         <div class="text-area">
             <label>Nombre de Usuario</label>
-            <input type="email" class="control" placeholder="Usuario" @bind=login.Username />
+            <input type="text" class="control" placeholder="Usuario" @bind=login.Username />
         </div>
         <div class="text-area">
             <label>Contraseña</label>
@@ -35,19 +35,20 @@
 @code{
     private LoginDTO login = new LoginDTO();
 
-
-    private async void IniciarSesion()
+    private async Task IniciarSesion()
     {
-        var loginResponse = await httpClient.PostAsJsonAsync<LoginDTO>("api/Usuario/Login", login);
-        if(loginResponse.IsSuccessStatusCode)
+        if(login.Username != null && login.Password != null)
         {
-            var session = await loginResponse.Content.ReadFromJsonAsync<SessionDTO>();
-            var autenticacionExt = (AutenticacionExtencion)authenticationProvider;
+            var loginResponse = await httpClient.PostAsJsonAsync<LoginDTO>("api/Usuario/Login", login);
+            if (loginResponse.IsSuccessStatusCode)
+            {
+                var session = await loginResponse.Content.ReadFromJsonAsync<SessionDTO>();
+                var autenticacionExt = (AutenticacionExtencion)authenticationProvider;
 
-            await autenticacionExt.ActualizarEstadoAutenticacion(session);
+                await autenticacionExt.ActualizarEstadoAutenticacion(session);
 
-            navigationManager.NavigateTo("/Inicio");
+                navigationManager.NavigateTo("/Inicio");
+            }
         }
     }
-
 }
