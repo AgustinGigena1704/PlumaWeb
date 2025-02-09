@@ -1,0 +1,53 @@
+﻿@page "/"
+@inject HttpClient httpClient
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authenticationProvider
+@using PlumaWeb.Extenciones
+@using Microsoft.AspNetCore.Components.Authorization
+@using PlumaWeb.DTOs
+
+<PageTitle>Pluma - Iniciar Sesion</PageTitle>
+
+<HeadContent>
+    <link href="login.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="container">
+    <div class="title">
+        <label>Iniciar Sesion</label>
+    </div>
+
+    <div class="login-container">
+        <div class="text-area">
+            <label>Nombre de Usuario</label>
+            <input type="email" class="control" placeholder="Usuario" @bind=login.Username />
+        </div>
+        <div class="text-area">
+            <label>Contraseña</label>
+            <input type="password" class="control" placeholder="Contraseña" @bind=login.Password />
+        </div>
+        <div class="login-button">
+            <button class="btn btn-primary" @onclick="IniciarSesion">Iniciar Sesion</button>
+        </div>
+    </div>
+</div>
+
+@code{
+    private LoginDTO login = new LoginDTO();
+
+
+    private async void IniciarSesion()
+    {
+        var loginResponse = await httpClient.PostAsJsonAsync<LoginDTO>("api/Usuario/Login", login);
+        if(loginResponse.IsSuccessStatusCode)
+        {
+            var session = await loginResponse.Content.ReadFromJsonAsync<SessionDTO>();
+            var autenticacionExt = (AutenticacionExtencion)authenticationProvider;
+
+            await autenticacionExt.ActualizarEstadoAutenticacion(session);
+
+            navigationManager.NavigateTo("/Inicio");
+        }
+    }
+
+}
