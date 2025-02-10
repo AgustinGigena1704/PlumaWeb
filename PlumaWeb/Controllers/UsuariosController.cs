@@ -31,7 +31,7 @@ namespace PlumaWeb.Controllers
                 .FirstOrDefaultAsync(u => u.Username == login.Username && u.Password == login.Password);
             if (usuario == null)
             {
-                return NotFound();
+                return StatusCode(StatusCodes.Status404NotFound, "Usuario o contraseña incorrectos");
             }
             Perfil? usuarioPerfil = usuario.Perfils.FirstOrDefault();
 

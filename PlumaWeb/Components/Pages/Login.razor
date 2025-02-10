@@ -1,5 +1,5 @@
 ﻿@page "/"
-@inject HttpClient httpClient
+@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager navigationManager
 @inject AuthenticationStateProvider authenticationProvider
 @using PlumaWeb.Extenciones
@@ -17,38 +17,56 @@
         <label>Iniciar Sesion</label>
     </div>
 
-    <div class="login-container">
-        <div class="text-area">
-            <label>Nombre de Usuario</label>
-            <input type="text" class="control" placeholder="Usuario" @bind=login.Username />
+    <EditForm Model="@login" OnValidSubmit="IniciarSesion" FormName="loginForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="login-container">
+            <div class="text-area">
+                <label>Nombre de Usuario</label>
+                <InputText class="control" placeholder="Usuario" @bind-Value="login.Username" />
+            </div>
+            <div class="text-area">
+                <label>Contraseña</label>
+                <InputText type="password" class="control" placeholder="Contraseña" @bind-Value="login.Password" />
+            </div>
+            <div class="login-button">
+                <button type="submit" class="btn btn-primary">Iniciar Sesion</button>
+            </div>
         </div>
-        <div class="text-area">
-            <label>Contraseña</label>
-            <input type="password" class="control" placeholder="Contraseña" @bind=login.Password />
-        </div>
-        <div class="login-button">
-            <button class="btn btn-primary" @onclick="IniciarSesion">Iniciar Sesion</button>
-        </div>
-    </div>
+    </EditForm>
 </div>
 
-@code{
+@code {
     private LoginDTO login = new LoginDTO();
 
     private async Task IniciarSesion()
     {
-        if(login.Username != null && login.Password != null)
+        login.Username = "agigena";
+        login.Password = "gige2003";
+        var httpClient = HttpClientFactory.CreateClient("API");
+        //httpClient.BaseAddress = new Uri("http:localhost:5000/");
+        var loginResponse = await httpClient.PostAsJsonAsync<LoginDTO>("api/Usuario/Login", login);
+        if (loginResponse.IsSuccessStatusCode)
         {
-            var loginResponse = await httpClient.PostAsJsonAsync<LoginDTO>("api/Usuario/Login", login);
-            if (loginResponse.IsSuccessStatusCode)
-            {
-                var session = await loginResponse.Content.ReadFromJsonAsync<SessionDTO>();
-                var autenticacionExt = (AutenticacionExtencion)authenticationProvider;
+            var session = await loginResponse.Content.ReadFromJsonAsync<SessionDTO>();
+            var autenticacionExt = (AutenticacionExtencion)authenticationProvider;
 
-                await autenticacionExt.ActualizarEstadoAutenticacion(session);
+            await autenticacionExt.ActualizarEstadoAutenticacion(session);
 
-                navigationManager.NavigateTo("/Inicio");
-            }
+            navigationManager.NavigateTo("/Inicio");
+        }
+        else
+        {
+            navigationManager.NavigateTo("/Error");
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await IniciarSesion();
         }
     }
 }
